@@ -1,0 +1,257 @@
+secrets: secretfile.yml
+templates:
+  global:
+    content_filter:
+      require:
+        - '*.avi'
+        - '*.mkv'
+        - '*.mp4'
+      reject:
+        - 'password.txt'
+        - '*.wmv'
+    # Limit the frequency of requests to domains so they don't complain about
+    # using a bot
+    domain_delay:
+      bt-chat.com: 5 seconds
+      eztv.it: 5 seconds
+      yts.to: 60 seconds
+      kickass.to: 10 seconds
+    # The Pirate Bay ssl certs always fail
+    verify_ssl_certificates: no
+    # Size and seed restrictions require real torrents
+    magnets: no
+    # Make sure all filenames are Windows safe (for samba)
+    pathscrub: windows
+
+  tv-shows:
+    inputs:
+      # eztv.it
+      # - rss: { url: 'http://ezrss.it/feed/', silent: yes }
+      # btchat - eztv group
+      # - rss: { url: 'http://rss.bt-chat.com/?group=3', silent: yes }
+      # btchat - vtv group
+      # - rss: { url: 'http://rss.bt-chat.com/?group=2', silent: yes }
+      # kickass.to ettv feed
+      #- rss: { url: 'https://kickass.to/usearch/ettv/?rss=1', silent: yes }
+      # EZTV local rss
+      - rss: { url: 'file:///home/pi/.flexget/ettv.xml', silent: yes }
+
+    # Impose reasonable size constraints
+    content_size:
+      max: 5000
+      min: 20
+    # Prevent from downloading shows that were aquired manually
+    # or are currently downloading
+    exists_series:
+      - "/media/Elements/Series"
+
+  movies-global-input:
+    inputs:
+      # yifi 720p with no category
+      - rss: { url: 'http://yts.to/rss/0/720p/All/0', silent: yes }
+
+  movies-score-input:
+    inputs:
+      # yifi 720p with no category and imdb > 7	  
+      - rss: { url: 'http://yts.to/rss/0/720p/All/7', silent: yes } 
+      # yifi 720p with no category and imdb > 8	  
+      - rss: { url: 'http://yts.to/rss/0/720p/All/8', silent: yes } 
+      # yifi 720p with no category and imdb > 9	  
+      - rss: { url: 'http://yts.to/rss/0/720p/All/9', silent: yes }
+
+  output:
+    deluge:
+      main_file_only: yes
+
+  movies:
+    seen_movies: strict # Don't download movies we've already seen
+    # Check for already downloaded or currently downloading movies
+    exists_movie:
+      - /media/Seagate/Movies
+    # Download propers, since they will have the same content_filename,
+    # lower/non-propers will be overwritten
+    proper_movies: yes
+    set:
+      path: /media/Seagate/Downloads
+      movedone: /media/Seagate/Movies
+      ratio: 1
+      removeatratio: yes
+
+  general_movies:
+    template:
+      - movies
+      - movies-global-input
+      - movies-score-input
+      - output
+    imdb:
+      min_score: 7.5
+      min_votes: 25000
+      reject_genres:
+        - documentary
+    imdb_required: yes
+
+  watchlist-movies:
+    template:
+      - movies
+      - movies-global-input
+      - movies-score-input
+      - output
+    imdb_required: yes 
+
+
+  watchlist-search-movies_template:
+    include: trakt_remove.yml
+    template:
+      - global
+      - movies
+      - output
+    imdb_required: yes
+    discover:
+      what:
+        - emit_movie_queue: yes
+      from:
+        - search_rss: http://yts.to/rss/{{search_term|replace("%20-%20","_")|replace("%3A%20","_")|replace("%20","_")}}/720p/All/0
+    movie_queue: accept
+
+  formula1:
+    inputs:
+      # kickass.to ettv feed
+      - rss: { url: 'https://kickass.to/usearch/user%3Asmcgill1969/?rss=1', silent: yes }
+    series:
+      - Formula 1:
+          quality: 720p
+          id_regexp:
+            - (\d\d\d\d)x(\d+)
+    regexp:
+      reject:
+        - \bQualifying\b: {from: title}
+        - \bNotebook\b: {from: title}
+    exists_series:
+      - /media/Seagate/Formula1
+    set:
+      path: /media/Seagate/Downloads
+      movedone: /media/Seagate/Formula1
+      ratio: 0.5
+      removeatratio: yes
+
+  tv_notify_me:
+    pushbullet:
+      apikey: '{{secrets.pushbullet.api_key}}'
+      device: '{{secrets.pushbullet.device}}'
+      title: Downloading
+      body: "{{series_name}} {{series_id}} {{quality|upper}}"
+
+  movies_notify_me:
+    pushbullet:
+      apikey: '{{secrets.pushbullet.api_key}}'
+      device: '{{secrets.pushbullet.device}}'
+      title: Downloading
+      body: "{{imdb_name}} {{imdb_year}}"
+
+tasks:
+
+  tv-shows:
+    priority: 10
+    template:
+      - global
+      - tv-shows
+      - tv_notify_me
+      - output
+    include: series.yml
+    exec: 
+      on_start:
+        phase: /usr/bin/python /home/pi/.flexget/ettvgenerator.py
+    thetvdb_lookup: yes
+    set:
+      path: /media/Elements/Downloads
+      movedone: /media/Elements/Series/{{tvdb_series_name}}/s{{series_season}}
+      content_filename: "{{tvdb_series_name|replace(' ','.')}}.{{series_id}}{% if tvdb_ep_name|default(False) %}.{{ tvdb_ep_name|replace(' ','.') }} {% endif %}{% if proper_count %}.proper{% if proper_count > 1 %}{{ proper_count }}{% endif %}{% endif %}.{{ quality|upper|replace(' ','.') }}"
+      ratio: 0.5
+      removeatratio: yes
+
+  trakt-watchlist:
+    priority: 20
+    template:
+      - global
+    #include: trakt.yml
+    trakt_list:
+      username: '{{ secrets.trakt.username }}'
+      password: '{{ secrets.trakt.password }}'
+      list: watchlist
+      type: movies
+    accept_all: yes
+    seen: local
+    movie_queue: add
+
+  global-movies:
+    priority: 21
+    template:
+      - global
+      - general_movies
+      - movies_notify_me
+
+  watchlist-movies:
+    priority: 22
+    movie_queue: accept
+    template:
+      - global
+      - watchlist-movies
+      - movies_notify_me
+
+
+  watchlist-search-movies:
+    priority: 23
+    template:
+      - watchlist-search-movies_template
+      - movies_notify_me
+
+  trakt-remove-watchlist:
+    priority: 15
+    listdir:
+      - /media/Seagate/Movies
+    accept_all: yes
+    disable:
+      - seen
+    movie_queue: accept
+    trakt_remove:
+      username: '{{ secrets.trakt.username }}'
+      password: '{{ secrets.trakt.password }}'
+      list: watchlist
+
+  formula1:
+    priority: 1
+    template:
+      - formula1
+      - output
+
+schedules:
+  - tasks: 'tv-shows'
+    interval:
+      hours: 5
+
+  - tasks: 'trakt-remove-watchlist'
+    interval:
+      days: 7
+
+  - tasks: 'global-movies'
+    interval: 
+      days: 1
+
+  - tasks: 'watchlist-movies'
+    interval: 
+      days: 1
+
+  - tasks: 'trakt-watchlist'
+    interval:
+      days: 1
+
+  - tasks: 'watchlist-search-movies'
+    interval:
+      days: 1
+
+# Run every 30 minutes on sundays from 7 to 11pm
+  - tasks: 'formula1'
+    schedule:
+      day_of_week: sun
+      hour: 7-23
+      minute: "*/30"

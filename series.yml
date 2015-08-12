@@ -1,0 +1,45 @@
+series:
+  settings:
+    normal:
+      quality: "hdtv <720p"
+  normal:
+    - Anger Management
+    - Banshee
+    - Continuum
+    - Covert Affairs
+    - Da Vinci's Demons
+    - Elementary
+    - Episodes
+    - Forever:
+        set:
+          tvdb_id: 281535
+    - Gotham
+    - Halt & Catch Fire:
+        name_regexp: ^halt(.and|.&)?.catch.fire
+        set:
+          tvdb_id: 271910
+    - How to Get Away With Murder
+    - Modern Family
+    - NCIS Los Angeles
+    - Pretty Little Liars
+    - Resurrection:
+        set:
+          tvdb_id: 269650
+    - Shameless US:
+        set:
+          tvdb_id: 161511
+    - Silicon Valley
+    - Suits
+    - The Big Bang Theory
+    - The Middle
+    - The Musketeers
+    - The Originals
+    - The Simpsons
+    - True Detective
+    - Two and a Half Men
+    - The Vampire Diaries
+  
+  720p:
+    - Game of Thrones
+    - Top Gear
+    - Cosmos A Space Time Odyssey
