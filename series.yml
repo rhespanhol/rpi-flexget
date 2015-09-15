@@ -1,13 +1,15 @@
 series:
   settings:
     normal:
-      quality: "hdtv <720p"
+      quality: "hdtv <720p h264"
   normal:
-    - Anger Management
     - Banshee
     - Continuum
     - Covert Affairs
     - Da Vinci's Demons
+    - Doctor Who 2005:
+        set:
+          tvdb_id: 78804
     - Elementary
     - Episodes
     - Forever:
@@ -20,6 +22,9 @@ series:
           tvdb_id: 271910
     - How to Get Away With Murder
     - Modern Family
+    - Mr. Robot:
+        set:
+          tvdb_id: 289590
     - NCIS Los Angeles
     - Pretty Little Liars
     - Resurrection:

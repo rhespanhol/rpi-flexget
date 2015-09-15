@@ -13,9 +13,10 @@ templates:
     # using a bot
     domain_delay:
       bt-chat.com: 5 seconds
-      eztv.it: 5 seconds
-      yts.to: 60 seconds
-      kickass.to: 10 seconds
+      eztv.ag: 20 seconds
+      yts.to: 20 seconds
+      kat.cr: 20 seconds
+      zoink.ch: 20 seconds
     # The Pirate Bay ssl certs always fail
     verify_ssl_certificates: no
     # Size and seed restrictions require real torrents

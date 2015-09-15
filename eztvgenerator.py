@@ -30,7 +30,7 @@ def add_to_rss(title, link, debug):
  
  
 added_Items = 0
-eztvLink = "https://eztv.it/sort/100/"
+eztvLink = "https://eztv.ag/sort/100/"
 request  = requests.get(eztvLink, verify=False)
 data = request.text
 soup = BeautifulSoup(data)

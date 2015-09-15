@@ -25,8 +25,8 @@ def add_to_rss(title, link, debug):
     rss.items.append(item)
     if debug:
         print "---------------------------------------------------"
-        print "Title: " + xtitle
-        print "\tLink: " + xlink
+        print "Title: " + title
+        print "\tLink: " + link
  
  
 added_Items = 0
@@ -40,15 +40,15 @@ for i in range (1,3):
     data = request.text
     soup = BeautifulSoup(data)
     for row in soup.find_all(class_='odd'):
-            title = row.find('a', class_='cellMainLink').getText() 
-            link  = row.find('a', class_="imagnet icon16")
-            add_to_rss(title, link['href'], False)
-            added_Items += 1
+        title = row.find('a', class_='cellMainLink').getText() 
+        link  = row.find('a', title="Torrent magnet link")
+        add_to_rss(title, link['href'], False)
+        added_Items += 1
     for row in soup.find_all(class_='even'):
-            title = row.find('a', class_='cellMainLink').getText()
-            link  = row.find('a', class_="imagnet icon16")
-            add_to_rss(title, link['href'], False)
-            added_Items += 1 
+        title = row.find('a', class_='cellMainLink').getText()
+        link  = row.find('a', title="Torrent magnet link")
+        add_to_rss(title, link['href'], False)
+        added_Items += 1 
 
 rss.write_xml(open("%s%s" % (PATH, FILE), "w" ))
-#print "Status: Complete (Found %i New Items)" % (added_Items)
+print "Status: Complete (Found %i New Items)" % (added_Items)
